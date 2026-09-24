@@ -385,11 +385,38 @@
     <script>
         let items = [];
 
+        // ==================================================================================
+        //  API CONFIGURATION  —  the ONE place to change before deploying the backend
+        // ==================================================================================
+        //  Every API request (/api/*) and every uploaded image (/uploads/*) is routed
+        //  through the resolved API_BASE below, so this single value covers the whole app.
+        //
+        //  • LOCAL DEV (npm start -> http://localhost:5000): leave PRODUCTION_API_URL
+        //    empty. Express serves this page and the API on the same origin, so all
+        //    requests stay relative — no other setup needed (a localhost guard keeps it
+        //    this way even if PRODUCTION_API_URL is later set).
+        //
+        //  • GITHUB PAGES (static host, GET/HEAD only): the Express backend cannot run
+        //    there — it must be deployed separately. After deploying, set the URL below
+        //    once, e.g.  const PRODUCTION_API_URL = 'https://findit-api.onrender.com';
+        //    That value is then used for every API call and image URL on the static site.
+        //
+        //  Runtime override (no file edit / build pipeline): define the global before
+        //  this script runs, e.g.  <script>window.LF_API_URL = 'https://…';</script>
+        //  An explicit window.LF_API_URL always wins over PRODUCTION_API_URL.
+        // ==================================================================================
+        const PRODUCTION_API_URL = '';
+        const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin);
+        const API_BASE = (window.LF_API_URL || (isLocalhost ? '' : PRODUCTION_API_URL)).replace(/\/+$/, '');
+        function toAbsolute(p) {
+            return (p && p.startsWith('/')) ? API_BASE + p : p;
+        }
+
         const $id = e => document.getElementById(e);
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
         async function apiFetch(url, opts = {}) {
-            const res = await fetch(url, opts);
+            const res = await fetch(toAbsolute(url), opts);
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 const err = new Error(data.error || `Request failed (${res.status})`);
@@ -555,7 +582,7 @@
                 return `
                     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
                         <div class="h-44 bg-slate-100 relative overflow-hidden">
-                            <img src="${esc(item.image || defaultImg)}" alt="${esc(item.title)}" class="w-full h-full object-cover">
+                            <img src="${esc(toAbsolute(item.image || defaultImg))}" alt="${esc(item.title)}" class="w-full h-full object-cover">
                             <span class="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full border ${badgeColor}">${esc(item.status)}</span>
                         </div>
                         <div class="p-5 flex-grow flex flex-col justify-between space-y-4">
