@@ -127,12 +127,12 @@ For other YOLO ONNX exports, export from Ultralytics: `yolo export model=yolov8n
 
 GitHub Pages can only host static files (it returns **405** for POST requests), so the Express backend must be deployed separately. Render's free tier is a good fit for this demo.
 
-1. Create a **Web Service** on [render.com](https://render.com) connected to this repository:
+1. Deploy via the **Blueprint** (recommended, pre-configured in `render.yaml`): on [render.com](https://render.com) choose **New → Blueprint**, pick this repository (`https://github.com/RishabhDhillon/findit_ai`), then **Apply**. Build (`npm install`), start (`npm start`), health check, region and environment variables are all preset — you are only prompted for `ADMIN_PASSWORD`.
+   Or create a **Web Service** manually with:
    - **Repository:** `https://github.com/RishabhDhillon/findit_ai`
    - **Build command:** `npm install`
-   - **Start command:** `npm start`
-   - Node 18+ is selected automatically from the `engines` field in `package.json`.
-2. Set the required environment variables in the Render dashboard:
+   - **Start command:** `npm start` — Node 18+ is selected automatically from the `engines` field in `package.json`.
+2. Set the required environment variables (auto-loaded from `render.yaml` when using the Blueprint):
 
    | Variable | Value | Purpose |
    |----------|-------|---------|
@@ -146,7 +146,7 @@ GitHub Pages can only host static files (it returns **405** for POST requests), 
    | `MONGO_URI` | *(empty)* | Leave empty to use the JSON store; set an Atlas URI for a durable database |
    | `PORT` | *(Render assigns one)* | Server port |
 
-3. Configure the **health check** path as `/api/health` (Render polls it to consider the service healthy).
+3. Configure the **health check** path as `/api/health` (Render polls it to consider the service healthy; pre-set in `render.yaml` for the Blueprint).
 4. After Render assigns the service URL (e.g. `https://findit-api.onrender.com`), point the static frontend at it: in `public/index.html`, find the `API CONFIGURATION` block and set `const PRODUCTION_API_URL = 'https://findit-api.onrender.com';`. Push to `main` and GitHub Pages redeploys `public/` automatically.
 5. `DB_FILE` (the JSON database) and `UPLOAD_DIR` (uploaded photos) live on the server's **ephemeral disk**. On the free/demo deployment the instance sleeps when idle and its disk is recreated on restart, so **reports, claims and photos are lost**. For persistent data, set `MONGO_URI` to a free MongoDB Atlas cluster (the DB becomes durable; uploaded files stay ephemeral unless you later add cloud storage).
 
